@@ -1,0 +1,63 @@
+<HTML>
+<HEAD>
+ <TITLE></TITLE>
+</HEAD>
+<BODY bgcolor="#FFFFCC">
+<SCRIPT LANGUAGE="JavaScript">
+
+<!--
+// Handle special cases where we need different code for Internet Explorer vs. Netscape navigator
+var InternetExplorer = navigator.appName.indexOf("Microsoft") != -1;
+
+// Handle all the the FSCommand messages in a Shockwave Flash movie
+function mapcontrols_DoFSCommand(command, args)
+{
+
+
+        // IE and Navgiator have slightly different document object models
+        // IE treats objects as members of "window" while in Navigator, 
+        //      embeded objects are members of "window.document"
+        var map = InternetExplorer ? parent.fw_map.map : parent.fw_map.document.map;
+        if ( command=="home" ) {
+                
+                map.Zoom(0);
+
+        } else if ( command=="zoom" ) {
+                // Zoom in or out by a percentage specified in args
+                map.Zoom(parseInt(args));
+                
+        } else if ( command=="panx" ) {
+                // Pan by the numbers of pixels specfied on the x-axis
+                map.Pan(parseInt(args), 0, 0);
+
+        } else if ( command=="pany" ) {
+                // Pan by the numbers of pixels specfied on the y-axis
+                map.Pan(0, parseInt(args), 0);
+
+        
+        }
+}
+//-->
+
+</SCRIPT>
+<SCRIPT LANGUAGE="VBScript">
+
+<!--
+// Map VB script events to the JavaScript method - Netscape will ignore this...
+Sub mapcontrols_FSCommand(ByVal command, ByVal args)
+        call mapcontrols_DoFSCommand(command, args)
+end sub
+-->
+
+</SCRIPT>
+<OBJECT ID="mapcontrols" CLASSID="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" CODEBASE="http://active.macromedia.com/flash2/cabs/swflash.cab#version=2,0,0,0" WIDTH="100%" HEIGHT="100%">
+ <PARAM NAME="Movie" VALUE="controls.swf">
+ <PARAM NAME="Play" VALUE="false">
+ <PARAM NAME="Quality" VALUE="best">
+<PARAM NAME="Salign" VALUE="left">
+ <EMBED NAME="mapcontrols" mayscript="mayscript" SRC="controls.swf" WIDTH="100%" HEIGHT="50" salign="l, t" quality="best" play="false" pluginspage="http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash2">
+ </EMBED>
+ </OBJECT>
+
+</BODY>
+</HTML>
