@@ -1,6 +1,6 @@
 # Pig's Tails in HTML: session summary
 
-13 October 2026, working with Claude Code on `main`. The same session also worked on Tome, Word Perhect, Adelaide, A House Is Not A Home and Now Here / Nowhere (see those repositories). The Pig's Tails part of the conversation is in [2026-10-13-transcript.md](2026-10-13-transcript.md).
+13 October 2026, working with Claude Code on `main`. The same session also worked on Tome, Word Perhect, Adelaide, A House Is Not A Home and Now Here / Nowhere (see those repositories). The Pig's Tails part of the conversation is in [transcript.md](transcript.md).
 
 ## Aim
 
