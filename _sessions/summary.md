@@ -1,0 +1,81 @@
+# Pig's Tails in HTML: session summary
+
+13 October 2026, working with Claude Code on `main`. The same session also worked on Tome, Word Perhect, Adelaide, A House Is Not A Home and Now Here / Nowhere (see those repositories). The Pig's Tails part of the conversation is in [transcript.md](transcript.md).
+
+## Aim
+
+Pete never knew how Pig's Tails (Gill Ord, technical direction by Peter Moore, produced by e-2) worked, what the control buttons did, or how it was put together, and suspected it was broken in Ruffle. The aims were to find out, and to port it to HTML, mainly as SVG.
+
+## How it was put together
+
+- **Pages.** `index.htm` and `apgo.html` were the same frameset: `map.htm` above (90%) and `controls.htm` below, both on cream `#FFFFCC`. `map.htm` showed `map.swf` at 100% × 100%. `pigstails.swf` is byte-for-byte the same as `map.swf`.
+- **`map.swf`** is Flash 1: 820×285, 10 fps, 1,003 frames. It has one JPEG (800×320, the video still), 42 shapes and 51 buttons. Nothing moves or changes colour: every shape and button is placed at one frame and removed at another. Its frame actions are `gotoFrame(372)` at frame 371, `gotoFrame(514)` at 513 (both just carry on) and `gotoFrame(1)` at frame 1003, so it loops (about 100 seconds).
+- **The timeline.**
+  - Frames 1–371: the photo, with 17 invisible buttons. From frame 133 to 353 a patch is added about every 12–13 frames.
+  - Frame 372: the photo goes, with a green ground and 18 shapes; the shapes are removed one a frame (402–419).
+  - Frames 514–637: single patches flash up for about 10 frames each.
+  - Frames 629–1000: pieces of the photo, cut to the patches' outlines (the same JPEG as a bitmap fill), are laid down one by one on cream, then cleared.
+  - Frame 1003: the photo returns.
+- **The buttons in `map.swf`** have no actions; they are rollovers.
+  - Buttons 2–35, on the photo, have only an "over" state, so a patch appears under the pointer before it's laid down.
+  - The laid-down patches (40–57, 58–74 and 94) are buttons with an "up" state and no "over" state, so a patch vanishes under the pointer to show the photo, and its "down" state brings it back while pressed (some shifted by a pixel or two).
+  - A few states are offset from their hit areas (button 10's patch shows 52 pixels away).
+- **`controls.swf`** is 1100×100, one frame, with seven buttons. Each is a pale yellow dot that shows a blue symbol under the pointer, and sends an FSCommand on release. Left to right:
+
+  | Dot | Symbol | Command |
+  | --- | --- | --- |
+  | 1 | left arrow | `panx -50` |
+  | 2 | up arrow | `pany -50` |
+  | 3 | minus | `zoom 200` (out) |
+  | 4 | boxed minus | `zoom 0` (home) |
+  | 5 | plus | `zoom 50` (in) |
+  | 6 | down arrow | `pany 50` |
+  | 7 | right arrow | `panx 50` |
+
+- **How the controls worked.** `controls.htm`'s `mapcontrols_DoFSCommand` called the Flash plugin's scripting methods on the movie in the other frame: `parent.fw_map.map.Zoom(percent)` and `.Pan(x, y, 0)`. `Zoom(50)` shows half as much, `Zoom(200)` twice as much, `Zoom(0)` all of it; `Pan` moves the view by pixels within the movie.
+- **Ruffle.** Ruffle (checked in 0.7.1) provides `PercentLoaded()` but not `Zoom` or `Pan`. So in Ruffle the piece and its rollovers can play, but the controls do nothing.
+
+## What was built
+
+**`_scripts/build.py`** writes `index.html` and `photo.jpg` from the two SWFs, using JPEXS FFDec 26.3.0 (downloaded to a scratch folder, not the repo):
+
+```sh
+python3 _scripts/build.py --ffdec /path/to/ffdec-cli.jar
+```
+
+- **Shapes.** Shapes are FFDec's SVG exports in their own coordinates, in `<defs>`. The photo, which FFDec embeds as a PNG 22 times, is the movie's JPEG, written once as `photo.jpg`.
+- **Placements.** Each placement is an element at its original matrix. A `visibility` animation (`steps(1, end)`) shows it at exactly its frames, over the 100.3-second loop.
+- **Buttons.** Each placed button is built inline with its four states (`up`, `over`, `down`, `hit`). Only the invisible hit area takes the pointer, and CSS `:hover` and `:hover:active` switch the states as Flash did.
+- **Controls.** The control buttons carry their FSCommand as `data-command`/`data-args`. On click, a short script applies them as Flash did, by changing the map's `viewBox`:
+  - zooming keeps the centre
+  - panning moves the view by screen pixels at the current zoom, kept within the movie
+  - zooming out stops at the whole picture (an assumption)
+- **Layout.** The frameset's layout without frames: the map fitted to the top 90% (`SHOWALL`, centred), and the controls fitted to the bottom strip's height at the left (`salign l, t`), on cream.
+
+`index.html` is 122 KB; `photo.jpg` is 13 KB. The README gains "How it works" and "The port" sections, and its viewing requirement is now a modern browser with JavaScript.
+
+**Removed:** `index.htm`, `apgo.html`, `map.htm` and `controls.htm`, with `git rm`.
+
+## Checks
+
+These were run in Chrome (Playwright):
+
+- **Frames against the original.** 13 frames rendered by FFDec (1, 30, 100, 200, 300, 371, 372, 450, 513, 514, 600, 800 and 1003) were compared with the page, paused mid-frame. The RMSE was 1.3–3.7%, steady from frame to frame. The cause is the photo's JPEG decoding and resampling, and the pictures look identical side by side.
+- **Rollovers.** At frame 50 a hidden patch appeared under the pointer. At frame 360 a laid-down patch vanished under the pointer and its down state showed while pressed.
+- **Controls.** Each dot showed its symbol under the pointer. Zoom in halved the view, pan moved it 50 screen pixels, zoom out went back to the whole picture and no further, and home reset it.
+- **Errors.** There were no script errors or missing files.
+
+## Status
+
+Uncommitted on `main`:
+
+- new: `index.html`, `photo.jpg`, `_scripts/build.py`, these notes
+- changed: `README.md`
+- deleted: the four old pages (staged)
+
+To note:
+
+- Links to `apgo.html` or `index.htm` will now get a 404 (the new page is `index.html`).
+- `map.swf`, `pigstails.swf`, `controls.swf` and `ws_ftp.log` were kept.
+- Rebuilding needs FFDec downloaded again.
+- Whether the plugin let `Zoom(200)` go out past the whole movie isn't known; the port stops there.
